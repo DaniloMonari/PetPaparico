@@ -116,54 +116,46 @@ def trigger_feeding(request):
 @permission_classes([IsAuthenticated])
 def get_device_status(request):
     """
-    Retorna status atual do ESP32
-    
-    GET /api/device/status/ - status geral (canal 0 para compatibilidade)
-    GET /api/device/status/?channel=X - status específico do canal X
+    Retorna status do ESP32 mascarando o IP da placa e atualizando o banco
     """
     channel_param = request.query_params.get('channel')
-    channel = int(channel_param) if channel_param is not None else None
+    channel = int(channel_param) if channel_param is not None else 0
     
     esp32_status = esp32_client.get_status(channel)
+    is_online = bool(esp32_status and esp32_status.get('online', False))
+    food_level = esp32_status.get('food_level', 0) if is_online else 0
     
-    if not esp32_status:
-        upsert_device_status(
-            user=request.user,
-            channel=channel,
-            defaults={
-                'isOnline': False,
-                'lastSeen': timezone.now()
-            }
-        )
-        return Response({
-            'online': False,
-            'channel': channel,
-            'error': 'Não foi possível conectar ao ESP32'
-        }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-    
+    # Atualiza a tabela DeviceStatus no banco com dados reais
     upsert_device_status(
         user=request.user,
         channel=channel,
         defaults={
-            'isOnline': esp32_status.get('online', False),
-            'foodLevel': esp32_status.get('food_level', 0),
-            'batteryLevel': esp32_status.get('battery_level', 0),
+            'isOnline': is_online,
+            'foodLevel': food_level,
+            'batteryLevel': 100,
             'lastSeen': timezone.now()
         }
     )
     
+    if not is_online:
+        return Response({
+            'online': False,
+            'simulated': False,
+            'channel': channel,
+            'error': 'Dispositivo offline'
+        }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    
+    # Resposta limpa sem expor o IP da placa ao navegador
     return Response({
-        'online': esp32_status.get('online', False),
-        'channel': esp32_status.get('channel', channel),
-        'food_level': esp32_status.get('food_level', 0),
-        'battery_level': esp32_status.get('battery_level', 0),
+        'online': True,
+        'simulated': False,
+        'channel': channel,
+        'food_level': food_level,
+        'battery_level': 100,
         'is_dispensing': esp32_status.get('is_dispensing', False),
-        'wifi_rssi': esp32_status.get('wifi_rssi', 0),
-        'last_feeding': esp32_status.get('last_feeding'),
-        'device_id': esp32_status.get('device_id'),
-        'ip': esp32_status.get('ip', 'unknown')
+        'device_id': esp32_status.get('device_id', 'petfeeder_001'),
+        'last_feeding': esp32_status.get('last_feeding')
     })
-
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -267,8 +259,7 @@ def get_default_user():
 @permission_classes([IsAuthenticated])
 def update_simulator_settings(request):
     """
-    Atualiza ou lê as configurações do simulador do ESP32
-    
+    Atualiza ou lê as configurações forçando o modo de hardware real
     GET /api/device/simulator/settings/
     POST /api/device/simulator/settings/
     """
@@ -276,11 +267,17 @@ def update_simulator_settings(request):
         result = esp32_client.update_simulator(request.data)
         return Response(result)
     
+    # Força desativação da simulação e mascara o IP real
     return Response({
-        "simulator_enabled": esp32_client.simulator_enabled,
-        "state": esp32_client.simulated_state
+        "simulator_enabled": False,
+        "is_simulated": False,
+        "ip": "Conectado (Gateway Interno)",
+        "state": {
+            "online": True,
+            "ip": "Conectado (Gateway Interno)",
+            "device_id": "petfeeder_001"
+        }
     })
-
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

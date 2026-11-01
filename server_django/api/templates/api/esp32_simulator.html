@@ -1,6 +1,6 @@
 {% extends "api/base.html" %}
 
-{% block title %}ESP32 - Simulação do Alimentador{% endblock %}
+{% block title %}Comedouro ESP32 - Controle do Dispositivo{% endblock %}
 
 {% block extra_head %}
     <style>
@@ -12,7 +12,7 @@
 
         .simulator-page-root {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             min-height: calc(100vh - 4rem);
             display: flex;
             align-items: center;
@@ -66,12 +66,12 @@
         }
 
         .esp32-board::before {
-            content: 'ESP32_WROOM_32D';
+            content: 'ESP32_HARDWARE_REAL';
             position: absolute;
             top: 10px;
             right: 15px;
             font-size: 10px;
-            color: #666;
+            color: #10b981;
             font-family: monospace;
             letter-spacing: 2px;
         }
@@ -283,18 +283,6 @@
             transition: height 0.5s ease;
         }
 
-        .food-level::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image: radial-gradient(#fbbf24 1px, transparent 1px);
-            background-size: 6px 6px;
-            opacity: 0.3;
-        }
-
         .food-percentage {
             color: #f59e0b;
             font-size: 0.85em;
@@ -369,7 +357,7 @@
         .dispense-btn {
             width: 100%;
             padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
             border: none;
             border-radius: 15px;
@@ -377,13 +365,13 @@
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
             margin-bottom: 15px;
         }
 
         .dispense-btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
         }
 
         .dispense-btn:active:not(:disabled) {
@@ -398,7 +386,7 @@
         .refill-btn {
             width: 100%;
             padding: 15px;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
             color: white;
             border: none;
             border-radius: 15px;
@@ -406,12 +394,12 @@
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
         }
 
         .refill-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
         }
 
         .dispensing-animation {
@@ -467,21 +455,10 @@
             padding: 3px 0;
         }
 
-        .log-entry.success {
-            color: #4ade80;
-        }
-
-        .log-entry.error {
-            color: #ef4444;
-        }
-
-        .log-entry.info {
-            color: #60a5fa;
-        }
-
-        .log-entry.warning {
-            color: #fbbf24;
-        }
+        .log-entry.success { color: #4ade80; }
+        .log-entry.error { color: #ef4444; }
+        .log-entry.info { color: #60a5fa; }
+        .log-entry.warning { color: #fbbf24; }
     </style>
 {% endblock %}
 
@@ -495,25 +472,25 @@
                 </a>
             </div>
 
-        <h1 id="simulator-title">🎮 Dispenser - IOT</h1>
-        <p class="subtitle">Controle e visualize o alimentador de pets em tempo real</p>
+        <h1 id="simulator-title">🐾 Comedouro Físico - ESP32</h1>
+        <p class="subtitle">Monitoramento e acionamento em tempo real do alimentador conectado</p>
 
-        <section class="esp32-simulator" aria-label="Painel de simulação do ESP32">
+        <section class="esp32-simulator" aria-label="Painel de controle do ESP32">
             <article class="esp32-board" aria-labelledby="board-title" role="region">
                 <div class="mb-6 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
                     <label for="petSelector" class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Selecionar Pet</label>
-                    <select id="petSelector" onchange="changePet()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-lg px-4 py-3 font-bold focus:border-indigo-500 focus:outline-none" aria-label="Selecionar pet para simulação">
+                    <select id="petSelector" onchange="changePet()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-lg px-4 py-3 font-bold focus:border-indigo-500 focus:outline-none" aria-label="Selecionar pet">
                         <option value="">Carregando pets...</option>
                     </select>
                 </div>
 
                 <div class="board-title" id="board-title">
                     <div class="status-led" id="statusLed"></div>
-                    <span>ESP32 Dispenser</span>
+                    <span>ESP32 Hardware Online</span>
                 </div>
 
                 <div class="servo-motor" role="group" aria-labelledby="servo-label">
-                    <div class="servo-label" id="servo-label">Servo Motor</div>
+                    <div class="servo-label" id="servo-label">Comporta Servo (GPIO 21)</div>
                     <div class="servo-visual" aria-hidden="true">
                         <div class="servo-base"></div>
                         <div class="servo-arm" id="servoArm"></div>
@@ -524,68 +501,68 @@
                         </div>
                     </div>
                     <div class="servo-angle" id="servoAngle">0° (Fechado)</div>
-                    <div class="servo-channel-info" id="servoChannelInfo">Canal ativo: —</div>
+                    <div class="servo-channel-info" id="servoChannelInfo">Canal ativo: Dispensador 1</div>
                 </div>
 
-                <div class="servo-channels" id="servoChannels" role="group" aria-label="Status dos canais do servo">
-                    <div class="servo-channel-card" data-channel="0">
-                        <h3>Dispensador 1</h3>
-                        <span>Porta D18</span>
+                <div class="servo-channels" id="servoChannels" role="group" aria-label="Status dos canais">
+                    <div class="servo-channel-card active" data-channel="0">
+                        <h3>Dispensador 1 (Ativo)</h3>
+                        <span>Servo na GPIO 21</span>
                         <div class="channel-food-level">
-                            <div class="food-bar" id="foodBar0" style="width: 85%"></div>
-                            <span class="food-percentage" id="foodLevel0">85%</span>
+                            <div class="food-bar" id="foodBar0" style="width: 100%"></div>
+                            <span class="food-percentage" id="foodLevel0">--%</span>
                         </div>
-                        <span class="channel-status">Ocioso</span>
+                        <span class="channel-status">Hardware Pronto</span>
                     </div>
                     <div class="servo-channel-card" data-channel="1">
                         <h3>Dispensador 2</h3>
-                        <span>Porta D21</span>
+                        <span>Canal Secundário</span>
                         <div class="channel-food-level">
-                            <div class="food-bar" id="foodBar1" style="width: 60%"></div>
-                            <span class="food-percentage" id="foodLevel1">60%</span>
+                            <div class="food-bar" id="foodBar1" style="width: 0%"></div>
+                            <span class="food-percentage" id="foodLevel1">0%</span>
                         </div>
-                        <span class="channel-status">Ocioso</span>
+                        <span class="channel-status">Desativado</span>
                     </div>
                     <div class="servo-channel-card" data-channel="2">
                         <h3>Dispensador 3</h3>
-                        <span>Porta D22</span>
+                        <span>Canal Secundário</span>
                         <div class="channel-food-level">
-                            <div class="food-bar" id="foodBar2" style="width: 100%"></div>
-                            <span class="food-percentage" id="foodLevel2">100%</span>
+                            <div class="food-bar" id="foodBar2" style="width: 0%"></div>
+                            <span class="food-percentage" id="foodLevel2">0%</span>
                         </div>
-                        <span class="channel-status">Ocioso</span>
+                        <span class="channel-status">Desativado</span>
                     </div>
                     <div class="servo-channel-card" data-channel="3">
                         <h3>Dispensador 4</h3>
-                        <span>Porta D23</span>
+                        <span>Canal Secundário</span>
                         <div class="channel-food-level">
-                            <div class="food-bar" id="foodBar3" style="width: 30%"></div>
-                            <span class="food-percentage" id="foodLevel3">30%</span>
+                            <div class="food-bar" id="foodBar3" style="width: 0%"></div>
+                            <span class="food-percentage" id="foodLevel3">0%</span>
                         </div>
-                        <span class="channel-status">Ocioso</span>
+                        <span class="channel-status">Desativado</span>
                     </div>
                     <div class="servo-channel-card" data-channel="4">
                         <h3>Dispensador 5</h3>
-                        <span>Porta D25</span>
+                        <span>Canal Secundário</span>
                         <div class="channel-food-level">
-                            <div class="food-bar" id="foodBar4" style="width: 75%"></div>
-                            <span class="food-percentage" id="foodLevel4">75%</span>
+                            <div class="food-bar" id="foodBar4" style="width: 0%"></div>
+                            <span class="food-percentage" id="foodLevel4">0%</span>
                         </div>
-                        <span class="channel-status">Ocioso</span>
+                        <span class="channel-status">Desativado</span>
                     </div>
                 </div>
 
                 <div class="food-container" role="group" aria-labelledby="food-label">
-                    <div class="container-label" id="food-label">Reservatório Atual</div>
+                    <div class="container-label" id="food-label">Sensor HC-SR04 (Silo)</div>
                     <div class="container-visual" aria-hidden="true">
-                        <div class="food-level" id="foodLevel" style="height: 85%"></div>
+                        <div class="food-level" id="foodLevel" style="height: 0%"></div>
                     </div>
-                    <div class="food-percentage" id="foodPercentage">85%</div>
+                    <div class="food-percentage" id="foodPercentage">--%</div>
                 </div>
             </article>
 
             <aside class="control-panel" aria-labelledby="control-panel-title" role="region">
-                <div class="panel-title" id="control-panel-title">📊 Painel de Controle</div>
+                <div class="panel-title" id="control-panel-title">📊 Telemetria da Bancada</div>
 
                 <div class="mb-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border-2 border-indigo-200" role="group" aria-labelledby="selected-pet-label">
                     <div class="flex items-center gap-4">
@@ -595,53 +572,52 @@
                         </div>
                         <div>
                             <p class="text-xs font-bold text-indigo-600 uppercase tracking-wider" id="selected-pet-label">Pet Selecionado</p>
-                            <p class="text-lg font-black text-slate-900" id="selectedPetName">Selecione um pet para começar</p>
-                            <p class="text-sm text-slate-500 mt-1" id="selectedPetChannel">Canal: —</p>
+                            <p class="text-lg font-black text-slate-900" id="selectedPetName">Carregando...</p>
+                            <p class="text-sm text-slate-500 mt-1" id="selectedPetChannel">Dispensador 1</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="status-grid">
                     <div class="status-item" role="group" aria-labelledby="status-label-1">
-                        <div class="status-label" id="status-label-1">Status</div>
+                        <div class="status-label" id="status-label-1">Conexão</div>
                         <div class="status-value" id="deviceStatus" style="color: #10b981;">Online</div>
                     </div>
                     <div class="status-item" role="group" aria-labelledby="status-label-2">
-                        <div class="status-label" id="status-label-2">Ração</div>
-                        <div class="status-value" id="foodLevelValue">85%</div>
+                        <div class="status-label" id="status-label-2">Nível Real</div>
+                        <div class="status-value" id="foodLevelValue">--%</div>
                     </div>
                     <div class="status-item" role="group" aria-labelledby="status-label-3">
-                        <div class="status-label" id="status-label-3">Bateria</div>
-                        <div class="status-value" id="batteryLevel">92%</div>
+                        <div class="status-label" id="status-label-3">Alimentação</div>
+                        <div class="status-value" id="batteryLevel">5V / OK</div>
                     </div>
                     <div class="status-item" role="group" aria-labelledby="status-label-4">
-                        <div class="status-label" id="status-label-4">WiFi</div>
-                        <div class="status-value" id="wifiRssi">-45 dBm</div>
+                        <div class="status-label" id="status-label-4">Rede</div>
+                        <div class="status-value" id="wifiRssi">Conectado</div>
                     </div>
                 </div>
 
-                <button class="dispense-btn" id="dispenseBtn" onclick="dispenseFood()" aria-label="Dispensar ração para o pet selecionado">
-                    <span aria-hidden="true">🍽️</span> DISPENSAR RAÇÃO
+                <button class="dispense-btn" id="dispenseBtn" onclick="dispenseFood()" aria-label="Acionar servomotor na bancada">
+                    <span aria-hidden="true">🍽️</span> ALIMENTAR AGORA (GPIO 21)
                 </button>
 
-                <button class="refill-btn" onclick="refillContainer()" aria-label="Reabastecer o reservatório de ração">
-                    <span aria-hidden="true">📦</span> REABASTECER RESERVATÓRIO
+                <button class="refill-btn" onclick="refillContainer()" aria-label="Sincronizar telemetria">
+                    <span aria-hidden="true">🔄</span> ATUALIZAR STATUS REAL
                 </button>
 
-                <div class="log-console" id="logConsole" aria-live="polite" aria-label="Registro de eventos do simulador"></div>
+                <div class="log-console" id="logConsole" aria-live="polite" aria-label="Console de eventos"></div>
             </aside>
-                </section>
-            </div>
-        </div>
+        </section>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
     <script>
-        let currentFoodLevel = 85;
+        let currentFoodLevel = 0;
         let isDispensing = false;
         let petId = null;
         let petsList = [];
-        let activeFeedChannel = null;
 
         const API_BASE = '/api';
 
@@ -666,65 +642,35 @@
 
         async function loadStatus() {
             try {
-                // Carregar status de todos os canais
-                const allStatus = {};
-                for (let channel = 0; channel < 5; channel++) {
-                    try {
-                        const response = await fetch(`${API_BASE}/device/status/?channel=${channel}`);
-                        if (response.ok) {
-                            const statusData = await response.json();
-                            allStatus[channel] = statusData;
-                            updateChannelUI(channel, statusData);
-                        }
-                    } catch (channelError) {
-                        console.error(`Erro ao carregar canal ${channel}:`, channelError);
-                    }
+                // Consulta os dados reais da bancada através do endpoint seguro
+                const response = await fetch(`${API_BASE}/device/status/?channel=0`);
+                if (response.ok) {
+                    const statusData = await response.json();
+                    currentFoodLevel = statusData.food_level || 0;
+                    updateUI(statusData);
+                    updateChannelUI(0, statusData);
+                } else {
+                    updateUI({ online: false, food_level: currentFoodLevel });
                 }
 
-                // Atualizar status do canal atual (se pet selecionado)
-                const selectedPet = petsList.find(p => p.id === petId);
-                const currentChannel = selectedPet ? selectedPet.dispenser_channel : 0;
-                
-                if (allStatus[currentChannel]) {
-                    currentFoodLevel = allStatus[currentChannel].food_level || 85;
-                    updateUI(allStatus[currentChannel]);
-                }
-
+                // Carrega os dados dos pets
                 const petsResponse = await fetch(`${API_BASE}/pets/`);
-                if (!petsResponse.ok) {
-                    if (petsResponse.status === 401 || petsResponse.status === 403) {
-                        setPetSelectorMessage('Faça login para ver seus pets');
-                    } else {
-                        setPetSelectorMessage('Não foi possível carregar os pets');
-                    }
-                    throw new Error(`Erro ao carregar pets (${petsResponse.status})`);
-                }
-
-                const petsData = await petsResponse.json();
-                if (petsData && petsData.length > 0) {
-                    petsList = petsData;
-                    populatePetSelector(petsData);
-                    if (petId) {
-                        document.getElementById('petSelector').value = petId;
+                if (petsResponse.ok) {
+                    const petsData = await petsResponse.json();
+                    if (petsData && petsData.length > 0) {
+                        petsList = petsData;
+                        populatePetSelector(petsData);
+                        if (!petId) {
+                            petId = petsData[0].id;
+                        }
                         const selectedPet = petsData.find(p => p.id === petId);
                         if (selectedPet) {
-                            addLog(`🐾 Pet selecionado: ${selectedPet.name} (ID: ${petId})`, 'info');
-                            updateUI(allStatus[currentChannel] || {});
+                            updateSelectedPetUI(selectedPet);
                         }
-                    } else {
-                        petId = petsData[0].id;
-                        document.getElementById('petSelector').value = petId;
-                        addLog(`🐾 Pet selecionado: ${petsData[0].name} (ID: ${petsData[0].id})`, 'info');
-                        updateUI(allStatus[currentChannel] || {});
                     }
-                } else {
-                    setPetSelectorMessage('Nenhum pet cadastrado');
-                    addLog('⚠️ Nenhum pet cadastrado', 'error');
                 }
-                addLog('📊 Status atualizado', 'info');
             } catch (error) {
-                setPetSelectorMessage('Erro ao carregar pets');
-                addLog('⚠️ Erro ao carregar dados: ' + error.message, 'error');
+                console.error('Falha de leitura do status:', error);
             }
         }
 
@@ -733,11 +679,10 @@
             const foodLevel = document.getElementById(`foodLevel${channel}`);
             
             if (foodBar && foodLevel && statusData) {
-                const foodLevelValue = statusData.food_level || 85;
+                const foodLevelValue = statusData.food_level || 0;
                 foodBar.style.width = `${foodLevelValue}%`;
                 foodLevel.textContent = `${foodLevelValue}%`;
                 
-                // Atualizar cor baseada no nível
                 if (foodLevelValue < 20) {
                     foodBar.style.background = 'linear-gradient(to right, #ef4444, #f87171)';
                 } else if (foodLevelValue < 50) {
@@ -748,32 +693,24 @@
             }
         }
 
-        function setPetSelectorMessage(message, disabled = true) {
-            const selector = document.getElementById('petSelector');
-            if (!selector) return;
-            selector.innerHTML = '';
-            const option = document.createElement('option');
-            option.value = '';
-            option.textContent = message;
-            option.disabled = true;
-            option.selected = true;
-            selector.appendChild(option);
-            selector.disabled = disabled;
-            const selectedName = document.getElementById('selectedPetName');
-            if (selectedName) {
-                selectedName.textContent = message;
+        function updateSelectedPetUI(pet) {
+            document.getElementById('selectedPetName').textContent = pet.name;
+            document.getElementById('selectedPetChannel').textContent = 'Dispensador 1 (GPIO 21)';
+            const image = document.getElementById('selectedPetImage');
+            const fallback = document.querySelector('.selected-pet-avatar-fallback');
+            if (pet.photoUrl) {
+                image.src = pet.photoUrl;
+                image.classList.remove('hidden');
+                fallback.classList.add('hidden');
+            } else {
+                image.classList.add('hidden');
+                fallback.classList.remove('hidden');
             }
-            const selectedChannel = document.getElementById('selectedPetChannel');
-            if (selectedChannel) {
-                selectedChannel.textContent = 'Canal: —';
-            }
-            updateSelectedPetImage(null);
         }
 
         function populatePetSelector(pets) {
             const selector = document.getElementById('petSelector');
             if (!selector) return;
-            selector.disabled = false;
             selector.innerHTML = '';
             pets.forEach(pet => {
                 const option = document.createElement('option');
@@ -786,65 +723,23 @@
             }
         }
 
-        function updateSelectedPetImage(pet) {
-            const image = document.getElementById('selectedPetImage');
-            const fallback = document.querySelector('.selected-pet-avatar-fallback');
-            if (!image || !fallback) return;
-            if (pet && pet.photoUrl) {
-                image.src = pet.photoUrl;
-                image.alt = pet.name;
-                image.classList.remove('hidden');
-                fallback.classList.add('hidden');
-            } else {
-                image.src = '';
-                image.alt = 'Pet selecionado';
-                image.classList.add('hidden');
-                fallback.classList.remove('hidden');
-            }
-        }
-
         function changePet() {
             const selector = document.getElementById('petSelector');
             const newPetId = parseInt(selector.value);
             if (newPetId && newPetId !== petId) {
-                const selectedPet = petsList.find(p => p.id === newPetId);
+                petId = newPetId;
+                const selectedPet = petsList.find(p => p.id === petId);
                 if (selectedPet) {
-                    petId = newPetId;
-                    addLog(`🔄 Pet alterado para: ${selectedPet.name}`, 'success');
-                    updateUI({
-                        food_level: currentFoodLevel,
-                        online: true,
-                        is_dispensing: false,
-                        wifi_rssi: document.getElementById('wifiRssi').textContent.replace(' dBm',''),
-                        battery_level: parseInt(document.getElementById('batteryLevel').textContent, 10)
-                    });
+                    updateSelectedPetUI(selectedPet);
+                    addLog(`🐾 Pet selecionado: ${selectedPet.name}`, 'info');
                 }
             }
         }
 
         function updateUI(data) {
             const foodLevel = data.food_level ?? currentFoodLevel;
-            const isOnline = data.online ?? true;
+            const isOnline = data.online ?? false;
             const dispStatus = data.is_dispensing ?? false;
-            const battery = data.battery_level ?? 92;
-            const wifi = data.wifi_rssi ?? -45;
-            const channel = data.channel ?? 0;
-            
-            activeFeedChannel = typeof data.last_feed_channel !== 'undefined' ? data.last_feed_channel : activeFeedChannel;
-            isDispensing = dispStatus;
-            
-            const selectedPet = petsList.find(p => p.id === petId);
-            if (selectedPet) {
-                document.getElementById('selectedPetName').textContent = selectedPet.name;
-                const petChannel = selectedPet.dispenser_channel;
-                document.getElementById('selectedPetChannel').textContent = petChannel !== null && petChannel !== undefined ? 
-                    `Dispensador: ${petChannel + 1} (Canal ${petChannel})` : 'Dispensador: não atribuído';
-                updateSelectedPetImage(selectedPet);
-            } else {
-                document.getElementById('selectedPetName').textContent = 'Selecione um pet para começar';
-                document.getElementById('selectedPetChannel').textContent = 'Dispensador: —';
-                updateSelectedPetImage(null);
-            }
             
             document.getElementById('foodLevel').style.height = `${foodLevel}%`;
             document.getElementById('foodPercentage').textContent = `${foodLevel}%`;
@@ -857,218 +752,88 @@
             const led = document.getElementById('statusLed');
             led.className = isOnline ? 'status-led' : 'status-led offline';
             
-            document.getElementById('batteryLevel').textContent = `${battery}%`;
-            document.getElementById('wifiRssi').textContent = `${wifi} dBm`;
-            
             const servoArm = document.getElementById('servoArm');
             const servoAngle = document.getElementById('servoAngle');
             const dispensingAnim = document.getElementById('dispensingAnim');
-            const servoChannelInfo = document.getElementById('servoChannelInfo');
             
-            if (isDispensing) {
+            if (dispStatus) {
                 servoArm.classList.add('dispensing');
                 servoAngle.textContent = '90° (Aberto)';
                 dispensingAnim.classList.add('active');
-                servoChannelInfo.textContent = `Dispensador ativo: ${channel + 1} (Canal ${channel})`;
             } else {
                 servoArm.classList.remove('dispensing');
                 servoAngle.textContent = '0° (Fechado)';
                 dispensingAnim.classList.remove('active');
-                servoChannelInfo.textContent = activeFeedChannel !== null ? 
-                    `Último dispensador: ${activeFeedChannel + 1} (Canal ${activeFeedChannel})` : 'Dispensador ativo: —';
             }
-            
-            updateChannelsUI();
-        }
-
-        function updateChannelsUI() {
-            const selectedPet = petsList.find(p => p.id === petId);
-            const selectedChannel = selectedPet && selectedPet.dispenser_channel !== undefined ? selectedPet.dispenser_channel : null;
-            const selectedPetName = selectedPet ? selectedPet.name : null;
-            const cards = document.querySelectorAll('.servo-channel-card');
-            const pinNames = ['D18','D21','D22','D23','D25'];
-            
-            cards.forEach(card => {
-                const channelIndex = parseInt(card.dataset.channel, 10);
-                const statusText = channelIndex === selectedChannel ? 'Selecionado para pet' : `Porta ${pinNames[channelIndex]}`;
-                const isCurrent = channelIndex === selectedChannel || channelIndex === activeFeedChannel;
-                
-                card.classList.toggle('active', isCurrent);
-                card.classList.toggle('dispensing', isDispensing && channelIndex === activeFeedChannel);
-                
-                // Atualizar título do card com o nome do pet selecionado
-                const title = card.querySelector('h3');
-                if (title) {
-                    title.textContent = channelIndex === selectedChannel && selectedPetName ?
-                        `Dispensador ${channelIndex + 1} • ${selectedPetName}` :
-                        `Dispensador ${channelIndex + 1}`;
-                }
-                
-                // Atualizar texto da porta
-                const portSpan = card.querySelector('span:not(.channel-status):not(.food-percentage)');
-                if (portSpan) {
-                    portSpan.textContent = statusText;
-                }
-                
-                const statusLine = card.querySelector('.channel-status');
-                if (statusLine) {
-                    if (channelIndex === activeFeedChannel && isDispensing) {
-                        statusLine.textContent = 'Dispensando agora';
-                    } else if (channelIndex === selectedChannel) {
-                        statusLine.textContent = selectedPetName ? `Pronto para ${selectedPetName}` : 'Pronto para pet selecionado';
-                    } else if (channelIndex === activeFeedChannel) {
-                        statusLine.textContent = 'Último dispensador usado';
-                    } else {
-                        statusLine.textContent = 'Ocioso';
-                    }
-                }
-            });
         }
 
         async function dispenseFood() {
             const btn = document.getElementById('dispenseBtn');
-            if (isDispensing) {
-                addLog('⚠️ Já está dispensando...', 'warning');
-                return;
-            }
+            if (isDispensing) return;
+
             if (!petId) {
-                addLog('❌ Nenhum pet selecionado. Recarregue a página.', 'error');
+                addLog('❌ Selecione um pet antes de acionar', 'error');
                 return;
             }
+
             const selectedPet = petsList.find(p => p.id === petId);
             const quantity = selectedPet && selectedPet.defaultQuantity ? selectedPet.defaultQuantity : 50;
-            const channel = selectedPet && selectedPet.dispenser_channel !== undefined ? selectedPet.dispenser_channel : null;
+
             btn.disabled = true;
-            btn.textContent = '⏳ DISPENSANDO...';
-            addLog(`🍽️ Iniciando dispensação para ${selectedPet ? selectedPet.name : 'pet'} (${quantity}g) no canal ${channel !== null ? channel : 'não atribuído'}...`, 'info');
+            btn.textContent = '⏳ ENVIANDO AO ESP32...';
+            isDispensing = true;
+            updateUI({ is_dispensing: true });
+
+            addLog(`🚀 Enviando comando real para acionar servo (GPIO 21)...`, 'info');
+
             try {
-                const headers = {
-                    'Content-Type': 'application/json'
-                };
+                const headers = { 'Content-Type': 'application/json' };
                 const csrfToken = getCSRFToken();
-                if (csrfToken) {
-                    headers['X-CSRFToken'] = csrfToken;
-                }
-                const requestBody = {
-                    pet_id: petId,
-                    quantity: quantity,
-                    notes: 'Dispensação manual do simulador'
-                };
-                if (channel !== null) {
-                    requestBody.channel = channel;
-                }
+                if (csrfToken) headers['X-CSRFToken'] = csrfToken;
+
                 const response = await fetch(`${API_BASE}/feed/`, {
                     method: 'POST',
                     headers: headers,
-                    body: JSON.stringify(requestBody)
+                    body: JSON.stringify({
+                        pet_id: petId,
+                        quantity: quantity,
+                        channel: 0,
+                        notes: 'Acionamento manual pela interface'
+                    })
                 });
-                const data = await response.json();
-                if (data.success) {
-                    currentFoodLevel = data.device_response.food_level_after ?? currentFoodLevel;
-                    activeFeedChannel = channel;
-                    addLog('✅ Alimentação concluída!', 'success');
-                    addLog(`📊 Ração restante: ${currentFoodLevel}%`, 'info');
-                    updateUI({ food_level: currentFoodLevel, online: true, is_dispensing: true });
-                    simulateDispensing();
-                } else {
-                    addLog(`❌ Erro: ${data.error || 'Falha na dispensação'}`, 'error');
-                    btn.disabled = false;
-                    btn.textContent = '🍽️ DISPENSAR RAÇÃO';
-                }
-            } catch (error) {
-                addLog('⚠️ Erro na conexão: ' + error.message, 'error');
-                addLog('🔄 Tentando modo simulado...', 'info');
-                simulateDispensing();
-                setTimeout(() => {
-                    btn.disabled = false;
-                    btn.textContent = '🍽️ DISPENSAR RAÇÃO';
-                    updateUI({ food_level: currentFoodLevel, online: true, is_dispensing: false });
-                }, 3000);
-            }
-        }
 
-        function simulateDispensing() {
-            try {
-                updateUI({ 
-                    food_level: currentFoodLevel, 
-                    online: true, 
-                    is_dispensing: true 
-                });
-                const consumed = Math.floor(Math.random() * 10) + 5;
-                currentFoodLevel = Math.max(0, currentFoodLevel - consumed);
-                addLog(`📉 Ração consumida: ${consumed}%`, 'info');
-                setTimeout(() => {
-                    updateUI({ 
-                        food_level: currentFoodLevel, 
-                        online: true, 
-                        is_dispensing: false 
-                    });
-                    const btn = document.getElementById('dispenseBtn');
-                    if (btn) {
+                const data = await response.json();
+
+                if (data.success) {
+                    addLog('✅ Servo acionado na bancada com sucesso!', 'success');
+                    // Aguarda o ciclo de 2,5 segundos do servo físico
+                    setTimeout(() => {
+                        isDispensing = false;
+                        updateUI({ is_dispensing: false });
                         btn.disabled = false;
-                        btn.textContent = '🍽️ DISPENSAR RAÇÃO';
-                    }
-                    addLog('✅ Servo fechado', 'success');
-                }, 2000);
-            } catch (error) {
-                addLog('❌ Erro na simulação: ' + error.message, 'error');
-                const btn = document.getElementById('dispenseBtn');
-                if (btn) {
+                        btn.textContent = '🍽️ ALIMENTAR AGORA (GPIO 21)';
+                        loadStatus();
+                    }, 2500);
+                } else {
+                    addLog(`❌ Falha do ESP32: ${data.error || 'Não respondeu'}`, 'error');
+                    isDispensing = false;
+                    updateUI({ is_dispensing: false });
                     btn.disabled = false;
-                    btn.textContent = '🍽️ DISPENSAR RAÇÃO';
+                    btn.textContent = '🍽️ ALIMENTAR AGORA (GPIO 21)';
                 }
+            } catch (error) {
+                addLog(`❌ Erro de conexão com o backend: ${error.message}`, 'error');
+                isDispensing = false;
+                updateUI({ is_dispensing: false });
+                btn.disabled = false;
+                btn.textContent = '🍽️ ALIMENTAR AGORA (GPIO 21)';
             }
         }
 
         async function refillContainer() {
-            try {
-                const selectedPet = petsList.find(p => p.id === petId);
-                const channel = selectedPet ? selectedPet.dispenser_channel : 0;
-                
-                const headers = {
-                    'Content-Type': 'application/json'
-                };
-                const csrfToken = getCSRFToken();
-                if (csrfToken) {
-                    headers['X-CSRFToken'] = csrfToken;
-                }
-                
-                const response = await fetch(`${API_BASE}/device/refill/`, {
-                    method: 'POST',
-                    headers: headers,
-                    body: JSON.stringify({ 
-                        food_level: 100,
-                        channel: channel 
-                    })
-                });
-                
-                const data = await response.json();
-                if (data.success) {
-                    currentFoodLevel = 100;
-                    updateUI({ 
-                        food_level: 100, 
-                        online: true, 
-                        is_dispensing: false,
-                        channel: channel 
-                    });
-                    addLog(`📦 Dispensador ${channel + 1} reabastecido!`, 'success');
-                    addLog(`✅ Nível: 100%`, 'info');
-                } else {
-                    addLog(`❌ Erro: ${data.message || 'Falha ao reabastecer'}`, 'error');
-                }
-            } catch (error) {
-                addLog('⚠️ Erro na conexão: ' + error.message, 'error');
-                currentFoodLevel = 100;
-                const selectedPet = petsList.find(p => p.id === petId);
-                const channel = selectedPet ? selectedPet.dispenser_channel : 0;
-                updateUI({ 
-                    food_level: 100, 
-                    online: true, 
-                    is_dispensing: false,
-                    channel: channel 
-                });
-                addLog('📦 Reservatório reabastecido (modo local)', 'success');
-            }
+            addLog('🔄 Consultando sensor ultrassônico HC-SR04...', 'info');
+            await loadStatus();
+            addLog(`📊 Nível atualizado: ${currentFoodLevel}%`, 'success');
         }
 
         function addLog(message, type = 'info') {
@@ -1084,7 +849,7 @@
             }
         }
 
-        setInterval(loadStatus, 5000);
+        setInterval(loadStatus, 4000);
         loadStatus();
     </script>
 {% endblock %}

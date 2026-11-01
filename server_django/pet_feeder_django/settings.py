@@ -192,7 +192,8 @@ REST_FRAMEWORK = {
 }
 
 # ESP32 IoT Configuration
-ESP32_BASE_URL = 'http://192.168.1.100'  # Ajuste conforme IP do seu ESP32
+SIMULATE_ESP32 = getenv_bool('SIMULATE_ESP32', 'False')
+ESP32_BASE_URL = os.getenv('ESP32_HOST', 'http://192.168.1.90')
 
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
