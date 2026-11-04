@@ -20,6 +20,7 @@ urlpatterns = [
     path("device/calibrate/", web_views.calibrate_servo_page, name="web_calibrate_servo"),
     path("device/test/", web_views.test_connection_page, name="web_test_connection"),
     path("device/cleaning/", web_views.dispenser_cleaning_page, name="web_dispenser_cleaning"),
+    path('device/control/', web_views.dispenser_control_view, name='web_dispenser_control'),
     path("notifications/", web_views.notifications_page, name="web_notifications"),
     path("profile/", web_views.profile_page, name="web_profile"),
 ]

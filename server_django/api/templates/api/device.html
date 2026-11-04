@@ -1,154 +1,216 @@
 {% extends "api/base.html" %}
+{% load static %}
 {% block title %}Dispositivo — Pet Paparico{% endblock %}
+
 {% block content %}
 <div class="min-h-screen bg-slate-50 p-4 sm:p-6 md:p-8">
-<div class="mx-auto max-w-7xl">
-<header class="mb-8">
-<div class="flex flex-col sm:flex-row sm:items-center gap-4">
-<div class="flex items-center gap-4">
-{% if selected_pet and selected_pet.photo %}
-<img src="{{ selected_pet.photo.url }}" alt="{{ selected_pet.name }}" class="h-20 w-20 rounded-3xl object-cover border border-slate-200 shadow-sm">
-{% else %}
-<div class="h-20 w-20 rounded-3xl bg-slate-100 text-slate-500 flex items-center justify-center text-3xl border border-slate-200">🐾</div>
-{% endif %}
-<div>
-<span class="inline-block bg-violet-100 text-violet-700 text-xs font-bold uppercase px-3 py-1 rounded-full mb-3">IoT</span>
-<h1 class="text-3xl sm:text-4xl font-black">Controle do Dispensador</h1>
-<p class="text-slate-500 mt-2">ESP32 e servo motor</p>
-</div>
-</div>
-</div>
-</header>
+  <div class="mx-auto max-w-7xl">
+    <header class="mb-8">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div class="flex items-center gap-4">
+          {% if selected_pet and selected_pet.photo %}
+            <img src="{{ selected_pet.photo.url }}" alt="{{ selected_pet.name }}" class="h-20 w-20 rounded-3xl object-cover border border-slate-200 shadow-sm">
+          {% else %}
+            <div class="h-20 w-20 rounded-3xl bg-slate-100 text-slate-500 flex items-center justify-center text-3xl border border-slate-200">🐾</div>
+          {% endif %}
+          <div>
+            <span class="inline-block bg-violet-100 text-violet-700 text-xs font-bold uppercase px-3 py-1 rounded-full mb-3">IoT</span>
+            <h1 class="text-3xl sm:text-4xl font-black">Controle do Dispensador</h1>
+            <p class="text-slate-500 mt-2">ESP32 e servo motor</p>
+          </div>
+        </div>
+      </div>
+    </header>
 
-{% include "api/partials/pet_select.html" with selected_pet=selected_pet pets=pets %}
+    {% include "api/partials/pet_select.html" with selected_pet=selected_pet pets=pets %}
 
-<!-- Botão para acessar Dispenser 1 -->
-<div class="mb-8">
-{% if selected_pet %}
-<a href="/api/device/simulator/?pet={{ selected_pet.id }}" class="block w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-[2rem] p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-{% else %}
-<a href="/api/device/simulator/" class="block w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-[2rem] p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-{% endif %}
-<div class="flex items-center justify-center gap-4">
-<span class="text-4xl">🎮</span>
-<div class="text-left">
-<p class="text-2xl font-black">ACESSAR DISPENSER</p>
-<p class="text-sm text-indigo-100">Simulador com animações em tempo real</p>
-</div>
-<span class="text-3xl ml-auto">→</span>
-</div>
-</a>
+    <!-- Botão para acessar Simulador -->
+    <div class="mb-8">
+      {% if selected_pet %}
+        <a href="/api/device/simulator/?pet={{ selected_pet.id }}" class="block w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-[2rem] p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+      {% else %}
+        <a href="/api/device/simulator/" class="block w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-[2rem] p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+      {% endif %}
+        <div class="flex items-center justify-center gap-4">
+          <span class="text-4xl">🎮</span>
+          <div class="text-left">
+            <p class="text-2xl font-black">ACESSAR DISPENSER</p>
+            <p class="text-sm text-indigo-100">Simulador com animações em tempo real</p>
+          </div>
+          <span class="text-3xl ml-auto">→</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Cards de Telemetria (com IDs para atualização dinâmica da ESP32) -->
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="bg-white rounded-3xl p-5 border border-slate-100">
+        <p class="text-xs font-bold uppercase text-slate-400">Status</p>
+        <p id="dispenser-status-badge" class="text-xl font-bold {% if status.online %}text-emerald-600{% else %}text-rose-600{% endif %}">
+          {% if status.online %}Online{% else %}Offline{% endif %}
+        </p>
+        <p id="dispenser-ip" class="text-xs text-slate-400 font-mono mt-2">IP: {{ status.ip|default:"192.168.1.90" }}</p>
+      </div>
+
+      <div class="bg-white rounded-3xl p-5 border border-slate-100">
+        <div class="flex justify-between items-center">
+          <p class="text-xs font-bold uppercase text-slate-400">Ração</p>
+          <span id="dispenser-raw-distance" class="text-xs font-mono text-slate-400">-- cm</span>
+        </div>
+        <p id="dispenser-food-level" class="text-xl font-bold">{{ status.food_level|default:0 }}%</p>
+        <progress id="dispenser-progress" value="{{ status.food_level|default:0 }}" max="100"
+                  class="mt-2 w-full h-2 rounded-full overflow-hidden accent-emerald-500"></progress>
+      </div>
+
+      <div class="bg-white rounded-3xl p-5 border border-slate-100">
+        <p class="text-xs font-bold uppercase text-slate-400">Bateria</p>
+        <p class="text-xl font-bold">{{ status.battery_level|default:"100" }}%</p>
+      </div>
+
+      <div class="bg-white rounded-3xl p-5 border border-slate-100">
+        <p class="text-xs font-bold uppercase text-slate-400">Dispensando</p>
+        <p id="dispenser-is-dispensing" class="text-xl font-bold">{% if status.is_dispensing %}Sim{% else %}Não{% endif %}</p>
+      </div>
+    </div>
+
+    {% if status.online == False %}
+      <div class="mb-8 rounded-[1.5rem] border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
+        <strong>Observação:</strong> o dispensador está offline no momento. Você pode testar o fluxo normalmente pelo simulador e seguir usando o app sem interrupções.
+      </div>
+    {% endif %}
+
+    <!-- Reservatórios / Servos por Canal -->
+    <div class="bg-white rounded-[2rem] border border-slate-100 p-6 shadow-sm mb-8">
+      <h2 class="text-2xl font-bold mb-6">Reservatórios / Servos</h2>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        {% for dispenser in dispensers %}
+          <div class="rounded-[2rem] border border-slate-200 p-5 bg-slate-50 shadow-sm">
+            <p class="text-xs uppercase tracking-[0.2em] text-slate-400 mb-2">
+              Reservatório {{ dispenser.channel }}{% if dispenser.pet %} • {{ dispenser.pet.name }}{% endif %}
+            </p>
+            {% if dispenser.pet %}
+              <p class="font-bold text-slate-900">{{ dispenser.pet.name }}</p>
+              <p class="text-sm text-slate-500">{{ dispenser.pet.species|default:'Pet' }}{% if dispenser.pet.breed %} • {{ dispenser.pet.breed }}{% endif %}</p>
+            {% else %}
+              <p class="font-bold text-emerald-600">Livre</p>
+              <p class="text-sm text-slate-500">Atribua um pet ao reservatório no cadastro.</p>
+            {% endif %}
+            <form method="post" class="mt-4 space-y-3">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="feed">
+              <input type="hidden" name="channel" value="{{ dispenser.channel }}">
+              <label class="text-sm font-bold">Quantidade (g)</label>
+              <input type="number" name="quantity" value="{{ dispenser.quantity }}" min="10" max="500" class="w-full rounded-xl border px-4 py-3">
+              <button type="submit" class="w-full rounded-2xl text-white py-3 font-bold transition-colors {% if dispenser.pet %}bg-indigo-600 hover:bg-indigo-500{% else %}bg-slate-300 cursor-not-allowed{% endif %}" {% if dispenser.pet %}{% else %}disabled{% endif %}>Dispensar</button>
+            </form>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Ações e Calibração -->
+    <div class="grid lg:grid-cols-2 gap-8">
+      <div class="bg-white rounded-[2rem] border border-slate-100 p-6 shadow-sm">
+        <h2 class="text-xl font-bold mb-6">
+          {% if selected_pet %}
+            Alimentar {{ selected_pet.name }}
+          {% else %}
+            Alimentar via ESP32
+          {% endif %}
+        </h2>
+        <form method="post" class="space-y-4">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="feed">
+          {% if selected_pet %}
+            <input type="hidden" name="pet_id" value="{{ selected_pet.id }}">
+            {% if selected_pet.dispenser_channel %}
+              <input type="hidden" name="channel" value="{{ selected_pet.dispenser_channel }}">
+            {% endif %}
+          {% endif %}
+          <label class="text-sm font-bold">Quantidade (g)</label>
+          <input type="number" name="quantity" value="{% if selected_pet %}{{ selected_pet.defaultQuantity }}{% else %}50{% endif %}" min="10" max="500" class="w-full rounded-xl border px-4 py-3">
+          <button type="submit" class="w-full bg-indigo-600 text-white rounded-2xl py-4 font-bold hover:bg-indigo-500">Dispensar</button>
+        </form>
+      </div>
+
+      <div class="bg-white rounded-[2rem] border border-slate-100 p-6 shadow-sm space-y-4">
+        <h2 class="text-xl font-bold">Calibração e testes</h2>
+
+        <!-- Controle Direto do Dispenser IoT -->
+        <a href="{% url 'web_dispenser_control' %}" class="block w-full border border-sky-300 bg-sky-50 text-sky-800 rounded-xl py-4 px-6 font-bold hover:bg-sky-100 transition-all text-center">
+          🕹️ Controle Manual do Dispenser (ESP32)
+        </a>
+
+        <!-- Calibrar Servo -->
+        <a href="{% url 'web_calibrate_servo' %}" class="block w-full border border-slate-200 rounded-xl py-4 px-6 font-bold hover:bg-slate-50 transition-all text-center">
+          🔧 Calibrar Servo
+        </a>
+
+        <!-- Testar Conexão -->
+        <a href="{% url 'web_test_connection' %}" class="block w-full border border-indigo-200 text-indigo-600 rounded-xl py-4 px-6 font-bold hover:bg-indigo-50 transition-all text-center">
+          🔌 Testar Conexão
+        </a>
+
+        <!-- Limpeza do comedouro -->
+        <a href="{% url 'web_dispenser_cleaning' %}" class="block w-full border border-emerald-200 text-emerald-700 rounded-xl py-4 px-6 font-bold hover:bg-emerald-50 transition-all text-center">
+          🧼 Limpeza do comedouro
+        </a>
+
+        <!-- Reabastecer -->
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="refill">
+          <button type="submit" class="w-full bg-emerald-600 text-white rounded-xl py-3 font-bold hover:bg-emerald-500">Reabastecer (100%)</button>
+        </form>
+      </div>
+    </div>
+
+    {% if simulator.simulator_enabled %}
+      <p class="mt-6 text-xs text-slate-400 text-center">ESP32 ativo — nível registrado: {{ simulator.state.food_level|default:"—" }}%</p>
+    {% endif %}
+  </div>
 </div>
 
-<div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-<div class="bg-white rounded-3xl p-5 border border-slate-100">
-<p class="text-xs font-bold uppercase text-slate-400">Status</p>
-<p class="text-xl font-bold {% if status.online %}text-emerald-600{% else %}text-rose-600{% endif %}">
-{% if status.online %}Online{% else %}Offline{% endif %}
-</p>
-<p class="text-xs text-slate-400 font-mono mt-2">IP: {{ status.ip|default:"—" }}</p>
-</div>
-<div class="bg-white rounded-3xl p-5 border border-slate-100">
-<p class="text-xs font-bold uppercase text-slate-400">Ração</p>
-<p class="text-xl font-bold">{{ status.food_level|default:0 }}%</p>
-<progress value="{{ status.food_level|default:0 }}" max="100"
-          class="mt-2 w-full h-2 rounded-full overflow-hidden accent-emerald-500"></progress>
-</div>
-<div class="bg-white rounded-3xl p-5 border border-slate-100">
-<p class="text-xs font-bold uppercase text-slate-400">Bateria</p>
-<p class="text-xl font-bold">{{ status.battery_level|default:"—" }}{% if status.battery_level %}%{% endif %}</p>
-</div>
-<div class="bg-white rounded-3xl p-5 border border-slate-100">
-<p class="text-xs font-bold uppercase text-slate-400">Dispensando</p>
-<p class="text-xl font-bold">{% if status.is_dispensing %}Sim{% else %}Não{% endif %}</p>
-</div>
-</div>
+<!-- Script de Telemetria Dinâmica com a ESP32 -->
+<script>
+    const ESP32_IP = "192.168.1.90";
 
-{% if status.online == False %}
-<div class="mb-8 rounded-[1.5rem] border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
-<strong>Observação:</strong> o dispensador está offline no momento. Você pode testar o fluxo normalmente pelo simulador e seguir usando o app sem interrupções.
-</div>
-{% endif %}
+    async function carregarTelemetriaReal() {
+        try {
+            const resp = await fetch(`http://${ESP32_IP}/api/status`);
+            if (!resp.ok) throw new Error("Falha HTTP");
+            const data = await resp.json();
 
-<div class="bg-white rounded-[2rem] border border-slate-100 p-6 shadow-sm mb-8">
-<h2 class="text-2xl font-bold mb-6">Reservatórios / Servos</h2>
-<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-{% for dispenser in dispensers %}
-<div class="rounded-[2rem] border border-slate-200 p-5 bg-slate-50 shadow-sm">
-<p class="text-xs uppercase tracking-[0.2em] text-slate-400 mb-2">
-Reservatório {{ dispenser.channel }}{% if dispenser.pet %} • {{ dispenser.pet.name }}{% endif %}
-</p>
-{% if dispenser.pet %}
-<p class="font-bold text-slate-900">{{ dispenser.pet.name }}</p>
-<p class="text-sm text-slate-500">{{ dispenser.pet.species|default:'Pet' }}{% if dispenser.pet.breed %} • {{ dispenser.pet.breed }}{% endif %}</p>
-{% else %}
-<p class="font-bold text-emerald-600">Livre</p>
-<p class="text-sm text-slate-500">Atribua um pet ao reservatório no cadastro.</p>
-{% endif %}
-<form method="post" class="mt-4 space-y-3">
-{% csrf_token %}
-<input type="hidden" name="action" value="feed">
-<input type="hidden" name="channel" value="{{ dispenser.channel }}">
-<label class="text-sm font-bold">Quantidade (g)</label>
-<input type="number" name="quantity" value="{{ dispenser.quantity }}" min="10" max="500" class="w-full rounded-xl border px-4 py-3">
-<button type="submit" class="w-full rounded-2xl text-white py-3 font-bold transition-colors {% if dispenser.pet %}bg-indigo-600 hover:bg-indigo-500{% else %}bg-slate-300 cursor-not-allowed{% endif %}" {% if dispenser.pet %}{% else %}disabled{% endif %}>Dispensar</button>
-</form>
-</div>
-{% endfor %}
-</div>
-</div>
+            const elemNivel = document.getElementById("dispenser-food-level");
+            const elemDist = document.getElementById("dispenser-raw-distance");
+            const elemProg = document.getElementById("dispenser-progress");
+            const elemStatus = document.getElementById("dispenser-status-badge");
+            const elemDispensing = document.getElementById("dispenser-is-dispensing");
 
-<div class="grid lg:grid-cols-2 gap-8">
-<div class="bg-white rounded-[2rem] border border-slate-100 p-6 shadow-sm">
-<h2 class="text-xl font-bold mb-6">
-{% if selected_pet %}
-Alimentar {{ selected_pet.name }}
-{% else %}
-Alimentar via ESP32
-{% endif %}
-</h2>
-<form method="post" class="space-y-4">
-{% csrf_token %}
-<input type="hidden" name="action" value="feed">
-{% if selected_pet %}
-<input type="hidden" name="pet_id" value="{{ selected_pet.id }}">
-{% if selected_pet.dispenser_channel %}
-<input type="hidden" name="channel" value="{{ selected_pet.dispenser_channel }}">
-{% endif %}
-{% endif %}
-<label class="text-sm font-bold">Quantidade (g)</label>
-<input type="number" name="quantity" value="{% if selected_pet %}{{ selected_pet.defaultQuantity }}{% else %}50{% endif %}" min="10" max="500" class="w-full rounded-xl border px-4 py-3">
-<button type="submit" class="w-full bg-indigo-600 text-white rounded-2xl py-4 font-bold hover:bg-indigo-500">Dispensar</button>
-</form>
-</div>
+            const dist = data.vao_livre_cm !== undefined ? parseFloat(data.vao_livre_cm).toFixed(1) : "--";
+            const level = data.food_level !== undefined ? parseInt(data.food_level) : 0;
 
-<div class="bg-white rounded-[2rem] border border-slate-100 p-6 shadow-sm space-y-4">
-<h2 class="text-xl font-bold">Calibração e testes</h2>
+            if (elemNivel) elemNivel.innerText = `${level}%`;
+            if (elemDist) elemDist.innerText = `${dist} cm livre`;
+            if (elemProg) elemProg.value = level;
+            if (elemDispensing) elemDispensing.innerText = data.is_dispensing ? "Sim" : "Não";
 
-<!-- Calibrar Servo - Link para página dedicada -->
-<a href="{% url 'web_calibrate_servo' %}" class="block w-full border border-slate-200 rounded-xl py-4 px-6 font-bold hover:bg-slate-50 transition-all text-center">
-🔧 Calibrar Servo
-</a>
+            if (elemStatus) {
+                elemStatus.innerText = "Online";
+                elemStatus.className = "text-xl font-bold text-emerald-600";
+            }
+        } catch (e) {
+            const elemStatus = document.getElementById("dispenser-status-badge");
+            if (elemStatus) {
+                elemStatus.innerText = "Offline";
+                elemStatus.className = "text-xl font-bold text-rose-600";
+            }
+        }
+    }
 
-<!-- Testar Conexão - Link para página dedicada -->
-<a href="{% url 'web_test_connection' %}" class="block w-full border border-indigo-200 text-indigo-600 rounded-xl py-4 px-6 font-bold hover:bg-indigo-50 transition-all text-center">
-🔌 Testar Conexão
-</a>
-
-<!-- Limpeza do comedouro - Página dedicada -->
-<a href="{% url 'web_dispenser_cleaning' %}" class="block w-full border border-emerald-200 text-emerald-700 rounded-xl py-4 px-6 font-bold hover:bg-emerald-50 transition-all text-center">
-🧼 Limpeza do comedouro
-</a>
-
-<!-- Reabastecer - Continua com POST -->
-<form method="post">{% csrf_token %}<input type="hidden" name="action" value="refill">
-<button type="submit" class="w-full bg-emerald-600 text-white rounded-xl py-3 font-bold hover:bg-emerald-500">Reabastecer (100%)</button></form>
-</div>
-</div>
-
-{% if simulator.simulator_enabled %}
-<p class="mt-6 text-xs text-slate-400 text-center">ESP32 ativo — nível registrado: {{ simulator.state.food_level|default:"—" }}%</p>
-{% endif %}
-</div>
-</div>
+    document.addEventListener("DOMContentLoaded", () => {
+        carregarTelemetriaReal();
+        setInterval(carregarTelemetriaReal, 5000);
+    });
+</script>
 {% endblock %}

@@ -1,0 +1,152 @@
+{% extends 'api/base.html' %}
+{% load static %}
+
+{% block title %}Controle do Dispenser | Pet Paparico{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto py-8 px-4">
+    <div class="bg-slate-800 text-slate-100 rounded-2xl p-6 shadow-xl border border-slate-700">
+        <h1 class="text-2xl font-bold text-center text-sky-400 mb-6">Controle do Dispenser</h1>
+
+        <!-- Configuração de Conexão com a ESP32 -->
+        <div class="flex gap-2 mb-6">
+            <input type="text" id="espIp" value="192.168.1.90" placeholder="IP da ESP32 (ex: 192.168.1.90)"
+                   class="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sky-400 text-sm">
+            <button onclick="atualizarStatus()" 
+                    class="bg-sky-500 hover:bg-sky-400 text-slate-900 font-semibold px-4 py-2 rounded-lg transition duration-150 text-sm">
+                Conectar
+            </button>
+        </div>
+
+        <!-- Card de Status do Sensor HC-SR04 -->
+        <div class="bg-slate-900 rounded-xl p-4 mb-6 border border-slate-700/80">
+            <div class="flex justify-between items-center mb-3 text-sm">
+                <span class="text-slate-400">Nível do Dispenser:</span>
+                <span id="labelStatus" class="px-2.5 py-1 rounded-full text-xs font-bold uppercase bg-slate-700 text-slate-300">
+                    Aguardando...
+                </span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+                <span class="text-slate-400">Distância Medida:</span>
+                <span id="distanciaCm" class="font-mono font-bold text-slate-100">-- cm</span>
+            </div>
+        </div>
+
+        <!-- Botão de Acionamento do Servo -->
+        <button id="btnFeed" onclick="dispararServo()" 
+                class="w-full bg-sky-500 hover:bg-sky-400 active:scale-[0.99] text-slate-900 font-bold py-3.5 px-4 rounded-xl shadow-lg transition duration-150 flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            Acionar Servo (90º por 2s)
+        </button>
+
+        <div id="logMsg" class="mt-4 text-xs text-slate-400 text-center min-h-[1.25rem]">
+            Pronto para comunicação.
+        </div>
+    </div>
+</div>
+
+<script>
+function getUrl(path) {
+    const ip = document.getElementById('espIp').value.trim();
+    return `http://${ip}${path}`;
+}
+
+async function atualizarStatus() {
+    const log = document.getElementById('logMsg');
+    try {
+        const response = await fetch(getUrl('/api/status'));
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+
+        // 1. Extração da distância e porcentagem diretamente do JSON do seu ESP32
+        const dist = data.vao_livre_cm !== undefined ? parseFloat(data.vao_livre_cm) : 0.0;
+        const nivel = data.food_level !== undefined ? parseInt(data.food_level) : 0;
+        const critico = data.estoque_critico === true;
+
+        // 2. Atualiza a distância medida
+        document.getElementById('distanciaCm').innerText = `${dist.toFixed(1)} cm (${nivel}%)`;
+
+        // 3. Determina o texto e a cor de exibição
+        const badge = document.getElementById('labelStatus');
+        
+        let textoStatus = "Vazio / Crítico";
+        let corFundo = "rgba(239, 68, 68, 0.2)";   // Vermelho
+        let corTexto = "#ef4444";
+        let corBorda = "rgba(239, 68, 68, 0.4)";
+
+        if (critico || nivel <= 15) {
+            textoStatus = "Vazio / Crítico";
+            corFundo = "rgba(239, 68, 68, 0.2)";
+            corTexto = "#f87171";
+            corBorda = "rgba(239, 68, 68, 0.4)";
+        } else if (nivel < 60) {
+            textoStatus = `Nível Médio (${nivel}%)`;
+            corFundo = "rgba(234, 179, 8, 0.2)";    // Amarelo
+            corTexto = "#facc15";
+            corBorda = "rgba(234, 179, 8, 0.4)";
+        } else {
+            textoStatus = `Cheio (${nivel}%)`;
+            corFundo = "rgba(34, 197, 94, 0.2)";    // Verde
+            corTexto = "#4ade80";
+            corBorda = "rgba(34, 197, 94, 0.4)";
+        }
+
+        // Aplica o texto e garante a visibilidade com estilos diretos
+        badge.innerText = textoStatus;
+        badge.style.backgroundColor = corFundo;
+        badge.style.color = corTexto;
+        badge.style.border = `1px solid ${corBorda}`;
+
+        log.innerText = `Sinal: ${data.wifi_rssi} dBm | Atualizado às ${new Date().toLocaleTimeString()}`;
+    } catch (err) {
+        console.error("Erro na leitura do status:", err);
+        const badge = document.getElementById('labelStatus');
+        badge.innerText = 'Offline';
+        badge.style.backgroundColor = "rgba(239, 68, 68, 0.2)";
+        badge.style.color = "#f87171";
+        badge.style.border = "1px solid rgba(239, 68, 68, 0.4)";
+        log.innerText = 'Não foi possível ler os dados do ESP32.';
+    }
+}
+
+async function dispararServo() {
+    const btn = document.getElementById('btnFeed');
+    const log = document.getElementById('logMsg');
+
+    btn.disabled = true;
+    btn.classList.add('opacity-50', 'cursor-not-allowed');
+    log.innerText = 'Acionando servomotor...';
+
+    try {
+        // Envio do POST simples
+        const response = await fetch(getUrl('/api/feed'), {
+            method: 'POST'
+        });
+
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.error || 'Falha no acionamento');
+        }
+
+        log.innerText = 'Comporta aberta em 90º! Aguardando 2s...';
+        setTimeout(() => {
+            log.innerText = 'Alimentação finalizada com sucesso.';
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            atualizarStatus();
+        }, 2700);
+    } catch (e) {
+        console.error("Erro no acionamento:", e);
+        log.innerText = `Erro: ${e.message}`;
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+}
+
+// Inicia a leitura
+window.onload = atualizarStatus;
+setInterval(atualizarStatus, 5000);
+</script>
+{% endblock %}

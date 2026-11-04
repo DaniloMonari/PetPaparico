@@ -1,4 +1,4 @@
-import time
+import time as time_module
 from datetime import date, datetime, time, timedelta
 
 from django.contrib import messages
@@ -776,7 +776,7 @@ def device_page(request):
                 result = esp32_client.dispense_food(
                     quantity=qty,
                     duration_ms=calculate_duration(qty),
-                    feeding_id=f"web_{pet.id}_{int(time.time())}",
+                    feeding_id=f"web_{pet.id}_{int(time_module.time())}",
                     channel=channel,
                 )
                 if result.get("success"):
@@ -1111,3 +1111,7 @@ def profile_page(request):
 
 def not_found(request, exception=None):
     return render(request, "api/404.html", {"show_nav": request.user.is_authenticated}, status=404)
+
+@login_required
+def dispenser_control_view(request):
+    return render(request, 'api/dispenser_control.html')
